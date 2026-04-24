@@ -54,6 +54,7 @@
 }
 
 .bulk-prompt-exclude__help {
+    display: block;
     line-height: 1.45;
     opacity: 0.8;
 }
@@ -79,14 +80,13 @@
 }
 
 .bulk-prompt-exclude__open-dialog {
-    display: grid;
-    grid-template-columns: 1.5em minmax(0, 1fr);
+    display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 0.5em;
     width: 100%;
     min-height: 0;
     margin: 0;
-    padding: 6px 10px;
+    padding: 6px 0;
     border: 0;
     border-radius: 0;
     background: transparent;
@@ -99,7 +99,7 @@
 }
 
 .bulk-prompt-exclude__open-dialog i {
-    width: 1.5em;
+    flex: 0 0 1.25em;
     text-align: center;
 }
 
