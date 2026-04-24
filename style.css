@@ -27,14 +27,35 @@
 
 .bulk-prompt-exclude__actions .menu_button {
     display: inline-flex;
+    flex: 1 1 150px;
     align-items: center;
     justify-content: center;
     gap: 6px;
     min-height: 32px;
+    min-width: 0;
+    white-space: nowrap;
+}
+
+.bulk-prompt-exclude__actions .menu_button span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .bulk_prompt_exclude_status {
     min-height: 1.2em;
+}
+
+.bulk-prompt-exclude__settings-status {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.bulk-prompt-exclude__enabled {
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .bulk-prompt-exclude--options {
@@ -50,8 +71,29 @@
     align-items: center;
     justify-content: flex-start;
     gap: 8px;
-    width: calc(100% - 20px);
-    margin: 6px 10px;
+    width: 100%;
+    min-height: 0;
+    margin: 0;
+    padding: 6px 10px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    color: inherit;
+    cursor: pointer;
+    font: inherit;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.bulk-prompt-exclude__open-dialog:hover {
+    background: var(--SmartThemeQuoteColor, rgb(255 255 255 / 8%));
+}
+
+.bulk-prompt-exclude__open-dialog span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .bulk-prompt-exclude-dialog {

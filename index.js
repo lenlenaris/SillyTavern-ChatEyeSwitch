@@ -1,4 +1,5 @@
 const MODULE_NAME = 'bulk_prompt_exclude';
+const DISPLAY_NAME = 'Chat Eye Switch';
 const METADATA_KEY = `${MODULE_NAME}.lastRun`;
 const DEFAULT_SETTINGS = Object.freeze({
     keepStart: '',
@@ -111,7 +112,7 @@ async function importNativeHideRange() {
             ? module.hideChatMessageRange
             : null;
     } catch (error) {
-        console.warn('[Bulk Prompt Exclude] Could not import native hideChatMessageRange.', error);
+        console.warn(`[${DISPLAY_NAME}] Could not import native hideChatMessageRange.`, error);
         return null;
     }
 }
@@ -351,6 +352,18 @@ function renderControlsContent() {
     `;
 }
 
+function renderSettingsContent() {
+    return `
+        <div class="bulk-prompt-exclude__settings-status">
+            <div class="bulk-prompt-exclude__enabled">
+                <i class="fa-solid fa-circle-check"></i>
+                <span>功能已啟用</span>
+            </div>
+            <small class="bulk_prompt_exclude_status"></small>
+        </div>
+    `;
+}
+
 function renderBulkPromptExcludeDialog() {
     if ($('#bulk_prompt_exclude_dialog').length) {
         return;
@@ -446,16 +459,15 @@ function renderSettings() {
         <div id="bulk_prompt_exclude_settings" class="bulk-prompt-exclude">
             <div class="inline-drawer">
                 <div class="inline-drawer-toggle inline-drawer-header">
-                    <b>Bulk Prompt Exclude</b>
+                    <b>${DISPLAY_NAME}</b>
                     <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
                 </div>
-                <div class="inline-drawer-content">${renderControlsContent()}</div>
+                <div class="inline-drawer-content">${renderSettingsContent()}</div>
             </div>
         </div>
     `;
 
     $('#extensions_settings2').append(html);
-    bindControls($('#bulk_prompt_exclude_settings'));
     updateStatus();
 }
 
@@ -470,7 +482,7 @@ function renderOptionsMenuControls() {
     const html = `
         <div id="bulk_prompt_exclude_options" class="bulk-prompt-exclude bulk-prompt-exclude--options">
             <hr>
-            <button class="menu_button bulk-prompt-exclude__open-dialog" data-bpe-action="open-dialog" type="button">
+            <button class="bulk-prompt-exclude__open-dialog" data-bpe-action="open-dialog" type="button">
                 <i class="fa-lg fa-solid fa-eye-slash"></i>
                 <span>樓層顯示設定</span>
             </button>
