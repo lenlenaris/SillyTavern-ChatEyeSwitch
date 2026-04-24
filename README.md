@@ -4,11 +4,12 @@ A small SillyTavern UI extension for bulk-applying the native message "Exclude f
 
 ## Features
 
-- Hide chat floors from prompts in bulk.
-- Optionally keep a 1-based floor range visible, such as floors 3 to 8.
-- Show every hidden floor again in one click.
-- Restore the last bulk hide operation without touching messages that were already hidden before the operation.
-- The send box hamburger menu opens a compact settings dialog, with the same controls also available in the Extensions panel.
+- Exclude a selected 1-based floor range from prompts in bulk.
+- Include a selected floor range in prompts again.
+- Leave the range empty to apply the action to every chat floor.
+- Restore the last bulk exclude/include operation without touching messages changed before that operation.
+- The send box hamburger menu opens the settings dialog; the Extensions panel only shows whether the extension is enabled.
+- Uses English by default and switches to Chinese when SillyTavern is set to Chinese or Traditional Chinese.
 
 ## Notes
 

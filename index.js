@@ -5,6 +5,46 @@ const DEFAULT_SETTINGS = Object.freeze({
     keepStart: '',
     keepEnd: '',
 });
+const TEXT = Object.freeze({
+    en: {
+        close: 'Close',
+        dialogTitle: 'Batch set chat messages prompt status',
+        enabled: 'Enabled',
+        excludeAction: 'Exclude selected floors from prompts',
+        excluded: 'Excluded {count} floor(s) from prompts{range}.',
+        includeAction: 'Include selected floors in prompts',
+        included: 'Included {count} floor(s) in prompts{range}.',
+        noChat: 'There are no chat floors to process.',
+        noMessagesToExclude: 'No selected floors need to be excluded from prompts.',
+        noMessagesToInclude: 'No selected floors need to be included in prompts.',
+        noLastOperation: 'There is no previous bulk operation to restore.',
+        rangeHelp: 'Leave blank to apply to all floors. Exclude from prompts = eye off; include in prompts = eye on. This only affects whether messages are sent to prompts; it does not delete chat messages.',
+        rangeLabel: 'Floor range to apply',
+        rangeText: ', floors {start}-{end}',
+        restoreAction: 'Restore last exclude/include',
+        restored: 'Restored {count} floor(s).',
+        status: 'Prompts: {included}/{total} floor(s) included, {excluded} excluded',
+    },
+    zh: {
+        close: '關閉',
+        dialogTitle: '批量設定聊天訊息提示詞狀態',
+        enabled: '功能已啟用',
+        excludeAction: '從提示詞排除所選樓層',
+        excluded: '已從提示詞排除 {count} 樓{range}。',
+        includeAction: '將所選樓層納入提示詞',
+        included: '已將 {count} 樓納入提示詞{range}。',
+        noChat: '目前沒有可處理的聊天樓層。',
+        noMessagesToExclude: '所選樓層沒有需要排除的訊息。',
+        noMessagesToInclude: '所選樓層沒有需要納入提示詞的訊息。',
+        noLastOperation: '沒有可還原的上次批量操作。',
+        rangeHelp: '留空代表套用全部樓層。從提示詞排除 = 關閉眼睛；納入提示詞 = 打開眼睛。這只影響訊息是否送入提示詞，不會刪除聊天內容。',
+        rangeLabel: '選擇應用的樓層範圍',
+        rangeText: '，第 {start}～{end} 樓',
+        restoreAction: '還原上次排除／納入',
+        restored: '已還原 {count} 樓。',
+        status: '提示詞：{included}/{total} 樓納入，{excluded} 樓排除',
+    },
+});
 
 function getContext() {
     return SillyTavern.getContext();
@@ -28,6 +68,38 @@ function getSettings() {
 
 function getCurrentChatMetadata() {
     return getContext().chatMetadata;
+}
+
+function isChineseLanguage(language) {
+    return String(language ?? '').trim().toLowerCase().startsWith('zh');
+}
+
+function getLanguageCandidates() {
+    const context = getContext();
+
+    return [
+        context.language,
+        context.settings?.language,
+        context.power_user?.language,
+        context.powerUserSettings?.language,
+        localStorage.getItem('language'),
+        localStorage.getItem('ST_Language'),
+        document.documentElement.lang,
+    ].filter(Boolean);
+}
+
+function getLanguageKey() {
+    return getLanguageCandidates().some(isChineseLanguage) ? 'zh' : 'en';
+}
+
+function t(key, replacements = {}) {
+    let text = TEXT[getLanguageKey()][key] ?? TEXT.en[key] ?? key;
+
+    for (const [name, value] of Object.entries(replacements)) {
+        text = text.replaceAll(`{${name}}`, String(value));
+    }
+
+    return text;
 }
 
 function getLastRun() {
@@ -57,7 +129,7 @@ function escapeAttribute(value) {
         .replaceAll('>', '&gt;');
 }
 
-function getKeepRange() {
+function getSelectedRange() {
     const settings = getSettings();
     const start = parseOptionalFloor(settings.keepStart);
     const end = parseOptionalFloor(settings.keepEnd);
@@ -75,13 +147,24 @@ function getKeepRange() {
     };
 }
 
-function isKeptMessage(messageIndex, keepRange) {
-    if (!keepRange) {
-        return false;
+function isSelectedMessage(messageIndex, selectedRange) {
+    if (!selectedRange) {
+        return true;
     }
 
     const floor = messageIndex + 1;
-    return floor >= keepRange.start && floor <= keepRange.end;
+    return floor >= selectedRange.start && floor <= selectedRange.end;
+}
+
+function getRangeText(selectedRange) {
+    if (!selectedRange) {
+        return '';
+    }
+
+    return t('rangeText', {
+        start: selectedRange.start,
+        end: selectedRange.end,
+    });
 }
 
 function refreshVisibleMessage(messageId, isHidden) {
@@ -105,86 +188,26 @@ async function saveChatAndMetadata() {
     }
 }
 
-async function importNativeHideRange() {
-    try {
-        const module = await import('/scripts/chats.js');
-        return typeof module.hideChatMessageRange === 'function'
-            ? module.hideChatMessageRange
-            : null;
-    } catch (error) {
-        console.warn(`[${DISPLAY_NAME}] Could not import native hideChatMessageRange.`, error);
-        return null;
-    }
-}
-
-function getTargetRanges(chatLength, keepRange) {
-    if (!keepRange) {
-        return [[0, chatLength - 1]];
-    }
-
-    const rawKeepStartIndex = keepRange.start - 1;
-    const rawKeepEndIndex = keepRange.end - 1;
-
-    if (rawKeepEndIndex < 0 || rawKeepStartIndex > chatLength - 1) {
-        return [[0, chatLength - 1]];
-    }
-
-    const keepStartIndex = Math.max(0, rawKeepStartIndex);
-    const keepEndIndex = Math.min(chatLength - 1, rawKeepEndIndex);
-    const ranges = [];
-
-    if (keepStartIndex > 0) {
-        ranges.push([0, keepStartIndex - 1]);
-    }
-
-    if (keepEndIndex < chatLength - 1) {
-        ranges.push([keepEndIndex + 1, chatLength - 1]);
-    }
-
-    return ranges.filter(([start, end]) => start <= end);
-}
-
-async function hideTargetMessages(chatLength, keepRange, changed) {
-    const context = getContext();
-    const nativeHideRange = await importNativeHideRange();
-
-    if (nativeHideRange) {
-        for (const [start, end] of getTargetRanges(chatLength, keepRange)) {
-            await nativeHideRange(start, end, false);
-        }
-        return;
-    }
-
-    for (const item of changed) {
-        const message = context.chat[item.id];
-        message.is_system = true;
-        refreshVisibleMessage(item.id, true);
-    }
-
-    refreshSwipeButtons();
-    await context.saveChat();
-}
-
-async function excludeAllExceptRange() {
+async function setSelectedPromptState(isExcluded) {
     const context = getContext();
     const chat = context.chat ?? [];
 
     if (!chat.length) {
-        toastr.info('目前沒有可處理的聊天樓層。');
+        toastr.info(t('noChat'));
         return;
     }
 
-    const keepRange = getKeepRange();
+    const selectedRange = getSelectedRange();
     const changed = [];
 
     for (let messageId = 0; messageId < chat.length; messageId++) {
-        if (isKeptMessage(messageId, keepRange)) {
+        if (!isSelectedMessage(messageId, selectedRange)) {
             continue;
         }
 
         const message = chat[messageId];
 
-        if (!message || message.is_system === true) {
+        if (!message || message.is_system === isExcluded) {
             continue;
         }
 
@@ -196,23 +219,40 @@ async function excludeAllExceptRange() {
 
     if (!changed.length) {
         updateStatus();
-        toastr.info('沒有新的樓層需要排除。');
+        toastr.info(t(isExcluded ? 'noMessagesToExclude' : 'noMessagesToInclude'));
         return;
     }
 
-    await hideTargetMessages(chat.length, keepRange, changed);
+    for (const item of changed) {
+        const message = chat[item.id];
+        message.is_system = isExcluded;
+        refreshVisibleMessage(item.id, isExcluded);
+    }
+
+    refreshSwipeButtons();
 
     setLastRun({
         changed,
-        keepRange,
+        selectedRange,
+        isExcluded,
         chatLength: chat.length,
         createdAt: Date.now(),
     });
-    await context.saveMetadata();
+    await saveChatAndMetadata();
     updateStatus();
 
-    const keptText = keepRange ? `，保留第 ${keepRange.start}～${keepRange.end} 樓` : '';
-    toastr.success(`已排除 ${changed.length} 樓${keptText}。`);
+    toastr.success(t(isExcluded ? 'excluded' : 'included', {
+        count: changed.length,
+        range: getRangeText(selectedRange),
+    }));
+}
+
+async function excludeSelectedMessages() {
+    await setSelectedPromptState(true);
+}
+
+async function includeSelectedMessages() {
+    await setSelectedPromptState(false);
 }
 
 async function restoreLastRun() {
@@ -222,7 +262,7 @@ async function restoreLastRun() {
     const changed = Array.isArray(lastRun?.changed) ? lastRun.changed : [];
 
     if (!changed.length) {
-        toastr.info('沒有可恢復的上次批量操作。');
+        toastr.info(t('noLastOperation'));
         return;
     }
 
@@ -251,43 +291,7 @@ async function restoreLastRun() {
     delete getCurrentChatMetadata()[METADATA_KEY];
     await saveChatAndMetadata();
     updateStatus();
-    toastr.success(`已恢復 ${restoredCount} 樓。`);
-}
-
-async function showAllMessages() {
-    const context = getContext();
-    const chat = context.chat ?? [];
-
-    if (!chat.length) {
-        toastr.info('目前沒有可處理的聊天樓層。');
-        return;
-    }
-
-    let shownCount = 0;
-
-    for (let messageId = 0; messageId < chat.length; messageId++) {
-        const message = chat[messageId];
-
-        if (!message || message.is_system !== true) {
-            continue;
-        }
-
-        message.is_system = false;
-        refreshVisibleMessage(messageId, false);
-        shownCount++;
-    }
-
-    if (!shownCount) {
-        updateStatus();
-        toastr.info('所有樓層已經都是顯示狀態。');
-        return;
-    }
-
-    refreshSwipeButtons();
-    delete getCurrentChatMetadata()[METADATA_KEY];
-    await saveChatAndMetadata();
-    updateStatus();
-    toastr.success(`已顯示全部樓層，恢復 ${shownCount} 樓。`);
+    toastr.success(t('restored', { count: restoredCount }));
 }
 
 function persistInputs() {
@@ -303,19 +307,25 @@ function persistInputs() {
 
     $(`[data-bpe-field="${field}"]`).not(input).val(settings[field]);
     getContext().saveSettingsDebounced();
+    updateStatus();
 }
 
 function updateStatus() {
     const context = getContext();
     const chat = context.chat ?? [];
-    const hiddenCount = chat.filter(message => message?.is_system === true).length;
-    const visibleCount = chat.length - hiddenCount;
+    const excludedCount = chat.filter(message => message?.is_system === true).length;
+    const includedCount = chat.length - excludedCount;
     const lastRun = getLastRun();
     const changedCount = Array.isArray(lastRun?.changed) ? lastRun.changed.length : 0;
+    const noChat = chat.length === 0;
 
-    $('.bulk_prompt_exclude_status').text(`${visibleCount}/${chat.length} 樓顯示中，${hiddenCount} 樓隱藏`);
+    $('.bulk_prompt_exclude_status').text(t('status', {
+        included: includedCount,
+        total: chat.length,
+        excluded: excludedCount,
+    }));
     $('[data-bpe-action="restore"]').prop('disabled', changedCount === 0).toggleClass('disabled', changedCount === 0);
-    $('[data-bpe-action="show-all"]').prop('disabled', hiddenCount === 0).toggleClass('disabled', hiddenCount === 0);
+    $('[data-bpe-action="apply"], [data-bpe-action="include"]').prop('disabled', noChat).toggleClass('disabled', noChat);
 }
 
 function renderControlsContent() {
@@ -325,26 +335,27 @@ function renderControlsContent() {
 
     return `
         <div class="bulk-prompt-exclude__content">
-            <div class="bulk-prompt-exclude__row">
-                <label>保留顯示起始樓</label>
-                <input class="text_pole" data-bpe-field="keepStart" type="number" min="1" step="1" inputmode="numeric" value="${keepStart}">
+            <div class="bulk-prompt-exclude__range">
+                <label>${t('rangeLabel')}</label>
+                <div class="bulk-prompt-exclude__range-inputs">
+                    <input class="text_pole" data-bpe-field="keepStart" type="number" min="1" step="1" inputmode="numeric" value="${keepStart}">
+                    <span>～</span>
+                    <input class="text_pole" data-bpe-field="keepEnd" type="number" min="1" step="1" inputmode="numeric" value="${keepEnd}">
+                </div>
             </div>
-            <div class="bulk-prompt-exclude__row">
-                <label>保留顯示結束樓</label>
-                <input class="text_pole" data-bpe-field="keepEnd" type="number" min="1" step="1" inputmode="numeric" value="${keepEnd}">
-            </div>
+            <small class="bulk-prompt-exclude__help">${t('rangeHelp')}</small>
             <div class="bulk-prompt-exclude__actions">
                 <button class="menu_button" data-bpe-action="apply" type="button">
                     <i class="fa-solid fa-eye-slash"></i>
-                    <span>隱藏範圍外</span>
+                    <span>${t('excludeAction')}</span>
                 </button>
-                <button class="menu_button" data-bpe-action="show-all" type="button">
+                <button class="menu_button" data-bpe-action="include" type="button">
                     <i class="fa-solid fa-eye"></i>
-                    <span>顯示全部樓層</span>
+                    <span>${t('includeAction')}</span>
                 </button>
                 <button class="menu_button" data-bpe-action="restore" type="button">
                     <i class="fa-solid fa-rotate-left"></i>
-                    <span>還原上次隱藏</span>
+                    <span>${t('restoreAction')}</span>
                 </button>
             </div>
             <small class="bulk_prompt_exclude_status"></small>
@@ -357,7 +368,7 @@ function renderSettingsContent() {
         <div class="bulk-prompt-exclude__settings-status">
             <div class="bulk-prompt-exclude__enabled">
                 <i class="fa-solid fa-circle-check"></i>
-                <span>功能已啟用</span>
+                <span>${t('enabled')}</span>
             </div>
             <small class="bulk_prompt_exclude_status"></small>
         </div>
@@ -375,9 +386,9 @@ function renderBulkPromptExcludeDialog() {
                 <div class="bulk-prompt-exclude-dialog__header">
                     <div class="bulk-prompt-exclude-dialog__title">
                         <i class="fa-solid fa-eye-slash"></i>
-                        <span id="bulk_prompt_exclude_dialog_title">樓層顯示設定</span>
+                        <span id="bulk_prompt_exclude_dialog_title">${t('dialogTitle')}</span>
                     </div>
-                    <button class="menu_button bulk-prompt-exclude-dialog__close" data-bpe-action="close-dialog" type="button" aria-label="關閉">
+                    <button class="menu_button bulk-prompt-exclude-dialog__close" data-bpe-action="close-dialog" type="button" aria-label="${t('close')}">
                         <i class="fa-solid fa-xmark"></i>
                     </button>
                 </div>
@@ -435,12 +446,12 @@ function bindControls(root) {
     root.find('[data-bpe-action="apply"]').off('click.bulkPromptExcludeAction').on('click.bulkPromptExcludeAction', async event => {
         event.preventDefault();
         event.stopPropagation();
-        await excludeAllExceptRange();
+        await excludeSelectedMessages();
     });
-    root.find('[data-bpe-action="show-all"]').off('click.bulkPromptExcludeAction').on('click.bulkPromptExcludeAction', async event => {
+    root.find('[data-bpe-action="include"]').off('click.bulkPromptExcludeAction').on('click.bulkPromptExcludeAction', async event => {
         event.preventDefault();
         event.stopPropagation();
-        await showAllMessages();
+        await includeSelectedMessages();
     });
     root.find('[data-bpe-action="restore"]').off('click.bulkPromptExcludeAction').on('click.bulkPromptExcludeAction', async event => {
         event.preventDefault();
@@ -484,7 +495,7 @@ function renderOptionsMenuControls() {
             <hr>
             <button class="bulk-prompt-exclude__open-dialog" data-bpe-action="open-dialog" type="button">
                 <i class="fa-lg fa-solid fa-eye-slash"></i>
-                <span>樓層顯示設定</span>
+                <span>${DISPLAY_NAME}</span>
             </button>
             <hr>
         </div>

@@ -4,19 +4,26 @@
     gap: 8px;
 }
 
-.bulk-prompt-exclude__row {
+.bulk-prompt-exclude__range {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.bulk-prompt-exclude__range label {
+    margin: 0;
+}
+
+.bulk-prompt-exclude__range-inputs {
     display: grid;
-    grid-template-columns: minmax(7em, 1fr) minmax(0, 120px);
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
     align-items: center;
     gap: 8px;
 }
 
-.bulk-prompt-exclude__row label {
-    margin: 0;
-}
-
-.bulk-prompt-exclude__row input {
+.bulk-prompt-exclude__range-inputs input {
     width: 100%;
+    min-width: 0;
 }
 
 .bulk-prompt-exclude__actions {
@@ -27,7 +34,7 @@
 
 .bulk-prompt-exclude__actions .menu_button {
     display: inline-flex;
-    flex: 1 1 150px;
+    flex: 1 1 220px;
     align-items: center;
     justify-content: center;
     gap: 6px;
@@ -44,6 +51,11 @@
 
 .bulk_prompt_exclude_status {
     min-height: 1.2em;
+}
+
+.bulk-prompt-exclude__help {
+    line-height: 1.45;
+    opacity: 0.8;
 }
 
 .bulk-prompt-exclude__settings-status {
@@ -67,9 +79,9 @@
 }
 
 .bulk-prompt-exclude__open-dialog {
-    display: flex;
+    display: grid;
+    grid-template-columns: 1.5em minmax(0, 1fr);
     align-items: center;
-    justify-content: flex-start;
     gap: 8px;
     width: 100%;
     min-height: 0;
@@ -84,6 +96,11 @@
     font: inherit;
     text-align: left;
     white-space: nowrap;
+}
+
+.bulk-prompt-exclude__open-dialog i {
+    width: 1.5em;
+    text-align: center;
 }
 
 .bulk-prompt-exclude__open-dialog:hover {
@@ -112,7 +129,7 @@
 }
 
 .bulk-prompt-exclude-dialog__panel {
-    width: min(520px, 100%);
+    width: min(580px, 100%);
     max-height: min(80vh, 560px);
     overflow: auto;
     padding: 12px;
