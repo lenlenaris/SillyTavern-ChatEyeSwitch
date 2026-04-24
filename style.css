@@ -155,15 +155,15 @@
 
 @media (max-width: 480px) {
     .bulk-prompt-exclude-dialog {
-        align-items: flex-start;
+        align-items: center;
         justify-content: center;
-        padding: 8px;
+        padding: 16px 8px;
     }
 
     .bulk-prompt-exclude-dialog__panel {
         width: 100%;
-        max-height: calc(100vh - 16px);
-        max-height: calc(100dvh - 16px);
+        max-height: calc(100vh - 32px);
+        max-height: calc(100dvh - 32px);
         padding: 10px;
     }
 

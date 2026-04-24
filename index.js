@@ -8,7 +8,7 @@ const DEFAULT_SETTINGS = Object.freeze({
 const TEXT = Object.freeze({
     en: {
         close: 'Close',
-        dialogTitle: 'Batch prompt status',
+        dialogTitle: 'Batch chat message prompt status',
         clearRange: 'Clear range',
         excludeAction: 'Exclude from prompts',
         excluded: 'Excluded {count} floor(s) from prompts{range}.',
