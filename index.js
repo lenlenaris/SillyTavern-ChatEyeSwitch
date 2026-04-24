@@ -9,7 +9,6 @@ const TEXT = Object.freeze({
     en: {
         close: 'Close',
         dialogTitle: 'Batch set chat messages prompt status',
-        enabled: 'Enabled',
         clearRange: 'Clear',
         excludeAction: 'Exclude selected floors from prompts',
         excluded: 'Excluded {count} floor(s) from prompts{range}.',
@@ -29,7 +28,6 @@ const TEXT = Object.freeze({
     zh: {
         close: '關閉',
         dialogTitle: '批量設定聊天訊息提示詞狀態',
-        enabled: '功能已啟用',
         clearRange: '清除',
         excludeAction: '從提示詞排除所選樓層',
         excluded: '已從提示詞排除 {count} 樓{range}。',
@@ -381,18 +379,6 @@ function renderControlsContent() {
     `;
 }
 
-function renderSettingsContent() {
-    return `
-        <div class="bulk-prompt-exclude__settings-status">
-            <div class="bulk-prompt-exclude__enabled">
-                <i class="fa-solid fa-circle-check"></i>
-                <span>${t('enabled')}</span>
-            </div>
-            <small class="bulk_prompt_exclude_status"></small>
-        </div>
-    `;
-}
-
 function renderBulkPromptExcludeDialog() {
     if ($('#bulk_prompt_exclude_dialog').length) {
         return;
@@ -448,15 +434,18 @@ function closeBulkPromptExcludeDialog() {
 }
 
 function bindControls(root) {
-    root.find('[data-bpe-field]').off('input.bulkPromptExclude').on('input.bulkPromptExclude', persistInputs);
-    root.find('[data-bpe-field], [data-bpe-action]:not([data-bpe-action="open-dialog"])')
+    const fields = root.find('[data-bpe-field]').add(root.filter('[data-bpe-field]'));
+    const actions = root.find('[data-bpe-action]').add(root.filter('[data-bpe-action]'));
+
+    fields.off('input.bulkPromptExclude').on('input.bulkPromptExclude', persistInputs);
+    fields.add(actions.not('[data-bpe-action="open-dialog"]'))
         .off('click.bulkPromptExclude')
         .on('click.bulkPromptExclude', event => event.stopPropagation());
-    root.find('[data-bpe-action="open-dialog"]').off('click.bulkPromptExcludeAction').on('click.bulkPromptExcludeAction', event => {
+    actions.filter('[data-bpe-action="open-dialog"]').off('click.bulkPromptExcludeAction').on('click.bulkPromptExcludeAction', event => {
         event.preventDefault();
         openBulkPromptExcludeDialog();
     });
-    root.find('[data-bpe-action="open-dialog"]').off('keydown.bulkPromptExcludeAction').on('keydown.bulkPromptExcludeAction', event => {
+    actions.filter('[data-bpe-action="open-dialog"]').off('keydown.bulkPromptExcludeAction').on('keydown.bulkPromptExcludeAction', event => {
         if (event.key !== 'Enter' && event.key !== ' ') {
             return;
         }
@@ -464,53 +453,31 @@ function bindControls(root) {
         event.preventDefault();
         openBulkPromptExcludeDialog();
     });
-    root.find('[data-bpe-action="close-dialog"]').off('click.bulkPromptExcludeAction').on('click.bulkPromptExcludeAction', event => {
+    actions.filter('[data-bpe-action="close-dialog"]').off('click.bulkPromptExcludeAction').on('click.bulkPromptExcludeAction', event => {
         event.preventDefault();
         event.stopPropagation();
         closeBulkPromptExcludeDialog();
     });
-    root.find('[data-bpe-action="clear-range"]').off('click.bulkPromptExcludeAction').on('click.bulkPromptExcludeAction', event => {
+    actions.filter('[data-bpe-action="clear-range"]').off('click.bulkPromptExcludeAction').on('click.bulkPromptExcludeAction', event => {
         event.preventDefault();
         event.stopPropagation();
         clearRangeInputs();
     });
-    root.find('[data-bpe-action="apply"]').off('click.bulkPromptExcludeAction').on('click.bulkPromptExcludeAction', async event => {
+    actions.filter('[data-bpe-action="apply"]').off('click.bulkPromptExcludeAction').on('click.bulkPromptExcludeAction', async event => {
         event.preventDefault();
         event.stopPropagation();
         await excludeSelectedMessages();
     });
-    root.find('[data-bpe-action="include"]').off('click.bulkPromptExcludeAction').on('click.bulkPromptExcludeAction', async event => {
+    actions.filter('[data-bpe-action="include"]').off('click.bulkPromptExcludeAction').on('click.bulkPromptExcludeAction', async event => {
         event.preventDefault();
         event.stopPropagation();
         await includeSelectedMessages();
     });
-    root.find('[data-bpe-action="restore"]').off('click.bulkPromptExcludeAction').on('click.bulkPromptExcludeAction', async event => {
+    actions.filter('[data-bpe-action="restore"]').off('click.bulkPromptExcludeAction').on('click.bulkPromptExcludeAction', async event => {
         event.preventDefault();
         event.stopPropagation();
         await restoreLastRun();
     });
-}
-
-function renderSettings() {
-    if ($('#bulk_prompt_exclude_settings').length) {
-        updateStatus();
-        return;
-    }
-
-    const html = `
-        <div id="bulk_prompt_exclude_settings" class="bulk-prompt-exclude">
-            <div class="inline-drawer">
-                <div class="inline-drawer-toggle inline-drawer-header">
-                    <b>${DISPLAY_NAME}</b>
-                    <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
-                </div>
-                <div class="inline-drawer-content">${renderSettingsContent()}</div>
-            </div>
-        </div>
-    `;
-
-    $('#extensions_settings2').append(html);
-    updateStatus();
 }
 
 function renderExtensionsMenuControls() {
@@ -536,7 +503,6 @@ function renderExtensionsMenuControls() {
 jQuery(async () => {
     const context = getContext();
     const eventTypes = context.eventTypes ?? context.event_types;
-    renderSettings();
     renderExtensionsMenuControls();
 
     context.eventSource.on(eventTypes.APP_READY, renderExtensionsMenuControls);

@@ -72,18 +72,6 @@
     opacity: 0.8;
 }
 
-.bulk-prompt-exclude__settings-status {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-
-.bulk-prompt-exclude__enabled {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
 .bulk-prompt-exclude__open-dialog {
     cursor: pointer;
 }
