@@ -10,6 +10,7 @@ const TEXT = Object.freeze({
         close: 'Close',
         dialogTitle: 'Batch set chat messages prompt status',
         enabled: 'Enabled',
+        clearRange: 'Clear',
         excludeAction: 'Exclude selected floors from prompts',
         excluded: 'Excluded {count} floor(s) from prompts{range}.',
         includeAction: 'Include selected floors in prompts',
@@ -29,6 +30,7 @@ const TEXT = Object.freeze({
         close: '關閉',
         dialogTitle: '批量設定聊天訊息提示詞狀態',
         enabled: '功能已啟用',
+        clearRange: '清除',
         excludeAction: '從提示詞排除所選樓層',
         excluded: '已從提示詞排除 {count} 樓{range}。',
         includeAction: '將所選樓層納入提示詞',
@@ -310,6 +312,16 @@ function persistInputs() {
     updateStatus();
 }
 
+function clearRangeInputs() {
+    const settings = getSettings();
+    settings.keepStart = '';
+    settings.keepEnd = '';
+
+    $('[data-bpe-field="keepStart"], [data-bpe-field="keepEnd"]').val('');
+    getContext().saveSettingsDebounced();
+    updateStatus();
+}
+
 function updateStatus() {
     const context = getContext();
     const chat = context.chat ?? [];
@@ -336,7 +348,13 @@ function renderControlsContent() {
     return `
         <div class="bulk-prompt-exclude__content">
             <div class="bulk-prompt-exclude__range">
-                <label>${t('rangeLabel')}</label>
+                <div class="bulk-prompt-exclude__range-header">
+                    <label>${t('rangeLabel')}</label>
+                    <button class="menu_button bulk-prompt-exclude__clear-range" data-bpe-action="clear-range" type="button">
+                        <i class="fa-solid fa-eraser"></i>
+                        <span>${t('clearRange')}</span>
+                    </button>
+                </div>
                 <div class="bulk-prompt-exclude__range-inputs">
                     <input class="text_pole" data-bpe-field="keepStart" type="number" min="0" step="1" inputmode="numeric" value="${keepStart}">
                     <span>～</span>
@@ -451,6 +469,11 @@ function bindControls(root) {
         event.stopPropagation();
         closeBulkPromptExcludeDialog();
     });
+    root.find('[data-bpe-action="clear-range"]').off('click.bulkPromptExcludeAction').on('click.bulkPromptExcludeAction', event => {
+        event.preventDefault();
+        event.stopPropagation();
+        clearRangeInputs();
+    });
     root.find('[data-bpe-action="apply"]').off('click.bulkPromptExcludeAction').on('click.bulkPromptExcludeAction', async event => {
         event.preventDefault();
         event.stopPropagation();
@@ -490,40 +513,23 @@ function renderSettings() {
     updateStatus();
 }
 
-function renderOptionsMenuControls() {
-    const menu = $('#options .options-content');
+function renderExtensionsMenuControls() {
+    const menu = $('#extensionsMenu');
 
-    if (!menu.length || $('#bulk_prompt_exclude_options').length) {
+    if (!menu.length || $('#bulk_prompt_exclude_extensions_menu').length) {
         updateStatus();
         return;
     }
 
     const html = `
-        <div id="bulk_prompt_exclude_options" class="bulk-prompt-exclude bulk-prompt-exclude--options">
-            <hr>
-            <div class="list-group-item flex-container flexGap5 interactable bulk-prompt-exclude__open-dialog" data-bpe-action="open-dialog" role="button" tabindex="0">
-                <i class="fa-fw fa-solid fa-eye-slash"></i>
-                <span>${DISPLAY_NAME}</span>
-            </div>
-            <hr>
+        <div id="bulk_prompt_exclude_extensions_menu" class="list-group-item flex-container flexGap5 interactable bulk-prompt-exclude__open-dialog" data-bpe-action="open-dialog" role="button" tabindex="0">
+            <div class="fa-solid fa-eye-slash extensionsMenuExtensionButton"></div>
+            <span>${DISPLAY_NAME}</span>
         </div>
     `;
 
-    const advancedAnchor = menu.find('#options_advanced');
-
-    if (advancedAnchor.length) {
-        advancedAnchor.before(html);
-    } else {
-        const firstDivider = menu.find('hr').first();
-
-        if (firstDivider.length) {
-            firstDivider.before(html);
-        } else {
-            menu.prepend(html);
-        }
-    }
-
-    bindControls($('#bulk_prompt_exclude_options'));
+    menu.append(html);
+    bindControls($('#bulk_prompt_exclude_extensions_menu'));
     updateStatus();
 }
 
@@ -531,9 +537,9 @@ jQuery(async () => {
     const context = getContext();
     const eventTypes = context.eventTypes ?? context.event_types;
     renderSettings();
-    renderOptionsMenuControls();
+    renderExtensionsMenuControls();
 
-    context.eventSource.on(eventTypes.APP_READY, renderOptionsMenuControls);
+    context.eventSource.on(eventTypes.APP_READY, renderExtensionsMenuControls);
     context.eventSource.on(eventTypes.CHAT_CHANGED, updateStatus);
     context.eventSource.on(eventTypes.MESSAGE_SENT, updateStatus);
     context.eventSource.on(eventTypes.MESSAGE_RECEIVED, updateStatus);

@@ -10,8 +10,21 @@
     gap: 6px;
 }
 
-.bulk-prompt-exclude__range label {
+.bulk-prompt-exclude__range-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.bulk-prompt-exclude__range-header label {
     margin: 0;
+}
+
+.bulk-prompt-exclude__clear-range {
+    flex: 0 0 auto;
+    min-height: 28px;
+    padding: 3px 8px;
 }
 
 .bulk-prompt-exclude__range-inputs {
@@ -69,14 +82,6 @@
     display: flex;
     align-items: center;
     gap: 8px;
-}
-
-.bulk-prompt-exclude--options {
-    padding: 0;
-}
-
-.bulk-prompt-exclude--options hr {
-    width: 100%;
 }
 
 .bulk-prompt-exclude__open-dialog {
