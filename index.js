@@ -415,12 +415,19 @@ function renderBulkPromptExcludeDialog() {
     });
 }
 
+function shouldAutoFocusDialogInput() {
+    return window.matchMedia?.('(hover: hover) and (pointer: fine)').matches ?? window.innerWidth > 480;
+}
+
 function openBulkPromptExcludeDialog() {
     renderBulkPromptExcludeDialog();
     const dialog = $('#bulk_prompt_exclude_dialog');
     dialog.addClass('bulk-prompt-exclude-dialog--open').attr('aria-hidden', 'false');
     updateStatus();
-    dialog.find('[data-bpe-field]').first().trigger('focus');
+
+    if (shouldAutoFocusDialogInput()) {
+        dialog.find('[data-bpe-field]').first().trigger('focus');
+    }
 
     $(document).off('keydown.bulkPromptExcludeDialog').on('keydown.bulkPromptExcludeDialog', event => {
         if (event.key === 'Escape') {
