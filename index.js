@@ -8,7 +8,7 @@ const DEFAULT_SETTINGS = Object.freeze({
 const TEXT = Object.freeze({
     en: {
         close: 'Close',
-        dialogTitle: 'Batch message prompt visibility',
+        dialogTitle: 'Batch message prompt inclusion',
         clearRange: 'Clear range',
         excludeAction: 'Exclude from prompt',
         excluded: 'Messages excluded: {count}{range}.',
@@ -24,7 +24,7 @@ const TEXT = Object.freeze({
         rangeText: ' (messages {start}-{end})',
         restoreAction: 'Restore last change',
         restored: 'Messages restored: {count}.',
-        status: 'Prompt visibility: {included}/{total} included, {excluded} excluded',
+        status: 'Prompt inclusion: {included}/{total} included, {excluded} excluded',
     },
     zh: {
         close: '關閉',
