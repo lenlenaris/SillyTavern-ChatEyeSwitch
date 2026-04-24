@@ -4,19 +4,11 @@ A small SillyTavern UI extension for bulk-applying the native message "Exclude f
 
 ## Features
 
-- Exclude all chat messages from prompts in one click.
+- Hide chat floors from prompts in bulk.
 - Optionally keep a 1-based floor range visible, such as floors 3 to 8.
-- Restore the last bulk operation without touching messages that were already hidden before the operation.
-- Controls are added to the send box hamburger menu, with the same controls mirrored in the Extensions panel.
-
-## Install
-
-Put this folder in either:
-
-- `SillyTavern/data/<user-handle>/extensions/SillyTavern-ChatEyeSwitch`
-- `SillyTavern/public/scripts/extensions/third-party/SillyTavern-ChatEyeSwitch`
-
-Then enable **Chat Eye Switch** from SillyTavern's extensions panel.
+- Show every hidden floor again in one click.
+- Restore the last bulk hide operation without touching messages that were already hidden before the operation.
+- The send box hamburger menu opens a compact settings dialog, with the same controls also available in the Extensions panel.
 
 ## Notes
 

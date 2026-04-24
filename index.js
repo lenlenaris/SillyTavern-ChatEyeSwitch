@@ -253,6 +253,42 @@ async function restoreLastRun() {
     toastr.success(`已恢復 ${restoredCount} 樓。`);
 }
 
+async function showAllMessages() {
+    const context = getContext();
+    const chat = context.chat ?? [];
+
+    if (!chat.length) {
+        toastr.info('目前沒有可處理的聊天樓層。');
+        return;
+    }
+
+    let shownCount = 0;
+
+    for (let messageId = 0; messageId < chat.length; messageId++) {
+        const message = chat[messageId];
+
+        if (!message || message.is_system !== true) {
+            continue;
+        }
+
+        message.is_system = false;
+        refreshVisibleMessage(messageId, false);
+        shownCount++;
+    }
+
+    if (!shownCount) {
+        updateStatus();
+        toastr.info('所有樓層已經都是顯示狀態。');
+        return;
+    }
+
+    refreshSwipeButtons();
+    delete getCurrentChatMetadata()[METADATA_KEY];
+    await saveChatAndMetadata();
+    updateStatus();
+    toastr.success(`已顯示全部樓層，恢復 ${shownCount} 樓。`);
+}
+
 function persistInputs() {
     const input = $(this);
     const field = input.data('bpeField');
@@ -272,37 +308,42 @@ function updateStatus() {
     const context = getContext();
     const chat = context.chat ?? [];
     const hiddenCount = chat.filter(message => message?.is_system === true).length;
+    const visibleCount = chat.length - hiddenCount;
     const lastRun = getLastRun();
     const changedCount = Array.isArray(lastRun?.changed) ? lastRun.changed.length : 0;
 
-    $('.bulk_prompt_exclude_status').text(`${hiddenCount}/${chat.length} 樓已排除`);
+    $('.bulk_prompt_exclude_status').text(`${visibleCount}/${chat.length} 樓顯示中，${hiddenCount} 樓隱藏`);
     $('[data-bpe-action="restore"]').prop('disabled', changedCount === 0).toggleClass('disabled', changedCount === 0);
+    $('[data-bpe-action="show-all"]').prop('disabled', hiddenCount === 0).toggleClass('disabled', hiddenCount === 0);
 }
 
-function renderControlsContent(compact = false) {
+function renderControlsContent() {
     const settings = getSettings();
     const keepStart = escapeAttribute(settings.keepStart);
     const keepEnd = escapeAttribute(settings.keepEnd);
-    const compactClass = compact ? ' bulk-prompt-exclude__content--compact' : '';
 
     return `
-        <div class="bulk-prompt-exclude__content${compactClass}">
+        <div class="bulk-prompt-exclude__content">
             <div class="bulk-prompt-exclude__row">
-                <label>不排除起始樓</label>
+                <label>保留顯示起始樓</label>
                 <input class="text_pole" data-bpe-field="keepStart" type="number" min="1" step="1" inputmode="numeric" value="${keepStart}">
             </div>
             <div class="bulk-prompt-exclude__row">
-                <label>不排除結束樓</label>
+                <label>保留顯示結束樓</label>
                 <input class="text_pole" data-bpe-field="keepEnd" type="number" min="1" step="1" inputmode="numeric" value="${keepEnd}">
             </div>
             <div class="bulk-prompt-exclude__actions">
                 <button class="menu_button" data-bpe-action="apply" type="button">
                     <i class="fa-solid fa-eye-slash"></i>
-                    <span>排除全部</span>
+                    <span>隱藏範圍外</span>
+                </button>
+                <button class="menu_button" data-bpe-action="show-all" type="button">
+                    <i class="fa-solid fa-eye"></i>
+                    <span>顯示全部樓層</span>
                 </button>
                 <button class="menu_button" data-bpe-action="restore" type="button">
                     <i class="fa-solid fa-rotate-left"></i>
-                    <span>恢復上次</span>
+                    <span>還原上次隱藏</span>
                 </button>
             </div>
             <small class="bulk_prompt_exclude_status"></small>
@@ -310,15 +351,83 @@ function renderControlsContent(compact = false) {
     `;
 }
 
+function renderBulkPromptExcludeDialog() {
+    if ($('#bulk_prompt_exclude_dialog').length) {
+        return;
+    }
+
+    const html = `
+        <div id="bulk_prompt_exclude_dialog" class="bulk-prompt-exclude-dialog" aria-hidden="true">
+            <div class="bulk-prompt-exclude-dialog__panel" role="dialog" aria-modal="true" aria-labelledby="bulk_prompt_exclude_dialog_title">
+                <div class="bulk-prompt-exclude-dialog__header">
+                    <div class="bulk-prompt-exclude-dialog__title">
+                        <i class="fa-solid fa-eye-slash"></i>
+                        <span id="bulk_prompt_exclude_dialog_title">樓層顯示設定</span>
+                    </div>
+                    <button class="menu_button bulk-prompt-exclude-dialog__close" data-bpe-action="close-dialog" type="button" aria-label="關閉">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                ${renderControlsContent()}
+            </div>
+        </div>
+    `;
+
+    $('body').append(html);
+
+    const dialog = $('#bulk_prompt_exclude_dialog');
+    bindControls(dialog);
+    dialog.off('click.bulkPromptExcludeDialog').on('click.bulkPromptExcludeDialog', event => {
+        if (event.target === dialog[0]) {
+            closeBulkPromptExcludeDialog();
+        }
+    });
+}
+
+function openBulkPromptExcludeDialog() {
+    renderBulkPromptExcludeDialog();
+    const dialog = $('#bulk_prompt_exclude_dialog');
+    dialog.addClass('bulk-prompt-exclude-dialog--open').attr('aria-hidden', 'false');
+    updateStatus();
+    dialog.find('[data-bpe-field]').first().trigger('focus');
+
+    $(document).off('keydown.bulkPromptExcludeDialog').on('keydown.bulkPromptExcludeDialog', event => {
+        if (event.key === 'Escape') {
+            closeBulkPromptExcludeDialog();
+        }
+    });
+}
+
+function closeBulkPromptExcludeDialog() {
+    $('#bulk_prompt_exclude_dialog')
+        .removeClass('bulk-prompt-exclude-dialog--open')
+        .attr('aria-hidden', 'true');
+    $(document).off('keydown.bulkPromptExcludeDialog');
+}
+
 function bindControls(root) {
     root.find('[data-bpe-field]').off('input.bulkPromptExclude').on('input.bulkPromptExclude', persistInputs);
-    root.find('[data-bpe-field], [data-bpe-action]')
+    root.find('[data-bpe-field], [data-bpe-action]:not([data-bpe-action="open-dialog"])')
         .off('click.bulkPromptExclude')
         .on('click.bulkPromptExclude', event => event.stopPropagation());
+    root.find('[data-bpe-action="open-dialog"]').off('click.bulkPromptExcludeAction').on('click.bulkPromptExcludeAction', event => {
+        event.preventDefault();
+        openBulkPromptExcludeDialog();
+    });
+    root.find('[data-bpe-action="close-dialog"]').off('click.bulkPromptExcludeAction').on('click.bulkPromptExcludeAction', event => {
+        event.preventDefault();
+        event.stopPropagation();
+        closeBulkPromptExcludeDialog();
+    });
     root.find('[data-bpe-action="apply"]').off('click.bulkPromptExcludeAction').on('click.bulkPromptExcludeAction', async event => {
         event.preventDefault();
         event.stopPropagation();
         await excludeAllExceptRange();
+    });
+    root.find('[data-bpe-action="show-all"]').off('click.bulkPromptExcludeAction').on('click.bulkPromptExcludeAction', async event => {
+        event.preventDefault();
+        event.stopPropagation();
+        await showAllMessages();
     });
     root.find('[data-bpe-action="restore"]').off('click.bulkPromptExcludeAction').on('click.bulkPromptExcludeAction', async event => {
         event.preventDefault();
@@ -361,11 +470,10 @@ function renderOptionsMenuControls() {
     const html = `
         <div id="bulk_prompt_exclude_options" class="bulk-prompt-exclude bulk-prompt-exclude--options">
             <hr>
-            <div class="bulk-prompt-exclude__title">
+            <button class="menu_button bulk-prompt-exclude__open-dialog" data-bpe-action="open-dialog" type="button">
                 <i class="fa-lg fa-solid fa-eye-slash"></i>
-                <span>批量排除樓層</span>
-            </div>
-            ${renderControlsContent(true)}
+                <span>樓層顯示設定</span>
+            </button>
             <hr>
         </div>
     `;
