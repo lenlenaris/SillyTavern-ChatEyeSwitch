@@ -4,9 +4,9 @@ A small SillyTavern UI extension for bulk-applying the native message "Exclude f
 
 ## Features
 
-- Exclude a selected SillyTavern floor range from prompts in bulk.
-- Include a selected floor range in prompts again.
-- Leave the range empty to apply the action to every chat floor.
+- Exclude a selected SillyTavern message range from the prompt in bulk.
+- Include a selected message range in the prompt again.
+- Leave the range empty to apply the action to every chat message.
 - Restore the last bulk exclude/include operation without touching messages changed before that operation.
 - The magic wand Extensions menu opens the settings dialog.
 - Uses English by default and switches to Chinese when SillyTavern is set to Chinese or Traditional Chinese.

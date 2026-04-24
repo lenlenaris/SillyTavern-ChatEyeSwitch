@@ -8,23 +8,23 @@ const DEFAULT_SETTINGS = Object.freeze({
 const TEXT = Object.freeze({
     en: {
         close: 'Close',
-        dialogTitle: 'Batch chat message prompt status',
+        dialogTitle: 'Batch message prompt visibility',
         clearRange: 'Clear range',
-        excludeAction: 'Exclude from prompts',
-        excluded: 'Excluded {count} floor(s) from prompts{range}.',
-        includeAction: 'Include in prompts',
-        included: 'Included {count} floor(s) in prompts{range}.',
-        noChat: 'There are no chat floors to process.',
-        noMessagesToExclude: 'No selected floors need to be excluded from prompts.',
-        noMessagesToInclude: 'No selected floors need to be included in prompts.',
-        noLastOperation: 'There is no previous bulk operation to restore.',
+        excludeAction: 'Exclude from prompt',
+        excluded: 'Messages excluded: {count}{range}.',
+        includeAction: 'Include in prompt',
+        included: 'Messages included: {count}{range}.',
+        noChat: 'No chat messages to update.',
+        noMessagesToExclude: 'Selected messages are already excluded from the prompt.',
+        noMessagesToInclude: 'Selected messages are already included in the prompt.',
+        noLastOperation: 'There is no previous bulk change to restore.',
         rangePlaceholder: 'all',
-        rangeHelp: 'Leave blank to apply to all floors.<br>Exclude from prompts = eye off; include in prompts = eye on. This only affects whether messages are sent to prompts; it does not delete chat messages.',
-        rangeLabel: 'Floor range',
-        rangeText: ', floors {start}-{end}',
+        rangeHelp: 'Leave blank to apply to all messages.<br>Excluded messages are hidden from the prompt; included messages can be sent with the prompt. This does not delete or edit chat messages.',
+        rangeLabel: 'Message range',
+        rangeText: ' (messages {start}-{end})',
         restoreAction: 'Restore last change',
-        restored: 'Restored {count} floor(s).',
-        status: 'Prompts: {included}/{total} floor(s) included, {excluded} excluded',
+        restored: 'Messages restored: {count}.',
+        status: 'Prompt visibility: {included}/{total} included, {excluded} excluded',
     },
     zh: {
         close: '關閉',
@@ -112,7 +112,7 @@ function setLastRun(value) {
     getCurrentChatMetadata()[METADATA_KEY] = value;
 }
 
-function parseOptionalFloor(value) {
+function parseOptionalMessageIndex(value) {
     const text = String(value ?? '').trim();
 
     if (!text) {
@@ -133,8 +133,8 @@ function escapeAttribute(value) {
 
 function getSelectedRange() {
     const settings = getSettings();
-    const start = parseOptionalFloor(settings.keepStart);
-    const end = parseOptionalFloor(settings.keepEnd);
+    const start = parseOptionalMessageIndex(settings.keepStart);
+    const end = parseOptionalMessageIndex(settings.keepEnd);
 
     if (start === null && end === null) {
         return null;
@@ -154,8 +154,7 @@ function isSelectedMessage(messageIndex, selectedRange) {
         return true;
     }
 
-    const floor = messageIndex;
-    return floor >= selectedRange.start && floor <= selectedRange.end;
+    return messageIndex >= selectedRange.start && messageIndex <= selectedRange.end;
 }
 
 function getRangeText(selectedRange) {
