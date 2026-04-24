@@ -9,7 +9,7 @@ const TEXT = Object.freeze({
     en: {
         close: 'Close',
         dialogTitle: 'Batch set chat messages prompt status',
-        clearRange: 'Clear',
+        clearRange: 'Clear floor range',
         excludeAction: 'Exclude selected floors from prompts',
         excluded: 'Excluded {count} floor(s) from prompts{range}.',
         includeAction: 'Include selected floors in prompts',
@@ -28,7 +28,7 @@ const TEXT = Object.freeze({
     zh: {
         close: '關閉',
         dialogTitle: '批量設定聊天訊息提示詞狀態',
-        clearRange: '清除',
+        clearRange: '清空樓層範圍',
         excludeAction: '從提示詞排除所選樓層',
         excluded: '已從提示詞排除 {count} 樓{range}。',
         includeAction: '將所選樓層納入提示詞',

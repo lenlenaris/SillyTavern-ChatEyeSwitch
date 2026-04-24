@@ -12,19 +12,27 @@
 
 .bulk-prompt-exclude__range-header {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
     gap: 8px;
 }
 
 .bulk-prompt-exclude__range-header label {
+    flex: 1 1 180px;
     margin: 0;
 }
 
 .bulk-prompt-exclude__clear-range {
+    display: inline-flex;
     flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
     min-height: 28px;
+    min-width: max-content;
     padding: 3px 8px;
+    white-space: nowrap;
 }
 
 .bulk-prompt-exclude__range-inputs {
