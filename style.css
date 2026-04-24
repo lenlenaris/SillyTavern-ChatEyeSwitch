@@ -80,31 +80,11 @@
 }
 
 .bulk-prompt-exclude__open-dialog {
-    display: flex;
-    align-items: center;
-    gap: 0.5em;
-    width: 100%;
-    min-height: 0;
-    margin: 0;
-    padding: 6px 0;
-    border: 0;
-    border-radius: 0;
-    background: transparent;
-    box-shadow: none;
-    color: inherit;
     cursor: pointer;
-    font: inherit;
-    text-align: left;
-    white-space: nowrap;
 }
 
 .bulk-prompt-exclude__open-dialog i {
-    flex: 0 0 1.25em;
     text-align: center;
-}
-
-.bulk-prompt-exclude__open-dialog:hover {
-    background: var(--SmartThemeQuoteColor, rgb(255 255 255 / 8%));
 }
 
 .bulk-prompt-exclude__open-dialog span {

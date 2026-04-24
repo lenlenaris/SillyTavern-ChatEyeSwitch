@@ -118,7 +118,7 @@ function parseOptionalFloor(value) {
     }
 
     const number = Number.parseInt(text, 10);
-    return Number.isFinite(number) && number > 0 ? number : null;
+    return Number.isFinite(number) && number >= 0 ? number : null;
 }
 
 function escapeAttribute(value) {
@@ -152,7 +152,7 @@ function isSelectedMessage(messageIndex, selectedRange) {
         return true;
     }
 
-    const floor = messageIndex + 1;
+    const floor = messageIndex;
     return floor >= selectedRange.start && floor <= selectedRange.end;
 }
 
@@ -338,9 +338,9 @@ function renderControlsContent() {
             <div class="bulk-prompt-exclude__range">
                 <label>${t('rangeLabel')}</label>
                 <div class="bulk-prompt-exclude__range-inputs">
-                    <input class="text_pole" data-bpe-field="keepStart" type="number" min="1" step="1" inputmode="numeric" value="${keepStart}">
+                    <input class="text_pole" data-bpe-field="keepStart" type="number" min="0" step="1" inputmode="numeric" value="${keepStart}">
                     <span>～</span>
-                    <input class="text_pole" data-bpe-field="keepEnd" type="number" min="1" step="1" inputmode="numeric" value="${keepEnd}">
+                    <input class="text_pole" data-bpe-field="keepEnd" type="number" min="0" step="1" inputmode="numeric" value="${keepEnd}">
                 </div>
             </div>
             <small class="bulk-prompt-exclude__help">${t('rangeHelp')}</small>
@@ -438,6 +438,14 @@ function bindControls(root) {
         event.preventDefault();
         openBulkPromptExcludeDialog();
     });
+    root.find('[data-bpe-action="open-dialog"]').off('keydown.bulkPromptExcludeAction').on('keydown.bulkPromptExcludeAction', event => {
+        if (event.key !== 'Enter' && event.key !== ' ') {
+            return;
+        }
+
+        event.preventDefault();
+        openBulkPromptExcludeDialog();
+    });
     root.find('[data-bpe-action="close-dialog"]').off('click.bulkPromptExcludeAction').on('click.bulkPromptExcludeAction', event => {
         event.preventDefault();
         event.stopPropagation();
@@ -493,10 +501,10 @@ function renderOptionsMenuControls() {
     const html = `
         <div id="bulk_prompt_exclude_options" class="bulk-prompt-exclude bulk-prompt-exclude--options">
             <hr>
-            <button class="bulk-prompt-exclude__open-dialog" data-bpe-action="open-dialog" type="button">
+            <div class="list-group-item flex-container flexGap5 interactable bulk-prompt-exclude__open-dialog" data-bpe-action="open-dialog" role="button" tabindex="0">
                 <i class="fa-fw fa-solid fa-eye-slash"></i>
                 <span>${DISPLAY_NAME}</span>
-            </button>
+            </div>
             <hr>
         </div>
     `;

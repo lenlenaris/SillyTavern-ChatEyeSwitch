@@ -4,7 +4,7 @@ A small SillyTavern UI extension for bulk-applying the native message "Exclude f
 
 ## Features
 
-- Exclude a selected 1-based floor range from prompts in bulk.
+- Exclude a selected SillyTavern floor range from prompts in bulk.
 - Include a selected floor range in prompts again.
 - Leave the range empty to apply the action to every chat floor.
 - Restore the last bulk exclude/include operation without touching messages changed before that operation.
