@@ -18,6 +18,7 @@ const TEXT = Object.freeze({
         noMessagesToExclude: 'No selected floors need to be excluded from prompts.',
         noMessagesToInclude: 'No selected floors need to be included in prompts.',
         noLastOperation: 'There is no previous bulk operation to restore.',
+        rangePlaceholder: 'all',
         rangeHelp: 'Leave blank to apply to all floors.<br>Exclude from prompts = eye off; include in prompts = eye on. This only affects whether messages are sent to prompts; it does not delete chat messages.',
         rangeLabel: 'Floor range to apply',
         rangeText: ', floors {start}-{end}',
@@ -37,6 +38,7 @@ const TEXT = Object.freeze({
         noMessagesToExclude: '所選樓層沒有需要排除的訊息。',
         noMessagesToInclude: '所選樓層沒有需要納入提示詞的訊息。',
         noLastOperation: '沒有可還原的上次批量操作。',
+        rangePlaceholder: '全部',
         rangeHelp: '留空代表套用全部樓層。<br>從提示詞排除 = 關閉眼睛；納入提示詞 = 打開眼睛。這只影響訊息是否送入提示詞，不會刪除聊天內容。',
         rangeLabel: '選擇應用的樓層範圍',
         rangeText: '，第 {start}～{end} 樓',
@@ -342,6 +344,7 @@ function renderControlsContent() {
     const settings = getSettings();
     const keepStart = escapeAttribute(settings.keepStart);
     const keepEnd = escapeAttribute(settings.keepEnd);
+    const rangePlaceholder = escapeAttribute(t('rangePlaceholder'));
 
     return `
         <div class="bulk-prompt-exclude__content">
@@ -354,9 +357,9 @@ function renderControlsContent() {
                     </button>
                 </div>
                 <div class="bulk-prompt-exclude__range-inputs">
-                    <input class="text_pole" data-bpe-field="keepStart" type="number" min="0" step="1" inputmode="numeric" value="${keepStart}">
+                    <input class="text_pole" data-bpe-field="keepStart" type="number" min="0" step="1" inputmode="numeric" placeholder="${rangePlaceholder}" value="${keepStart}">
                     <span>～</span>
-                    <input class="text_pole" data-bpe-field="keepEnd" type="number" min="0" step="1" inputmode="numeric" value="${keepEnd}">
+                    <input class="text_pole" data-bpe-field="keepEnd" type="number" min="0" step="1" inputmode="numeric" placeholder="${rangePlaceholder}" value="${keepEnd}">
                 </div>
             </div>
             <small class="bulk-prompt-exclude__help">${t('rangeHelp')}</small>
